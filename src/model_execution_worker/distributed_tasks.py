@@ -632,9 +632,6 @@ def prepare_keys_file_chunk(
         chunk_target_dir = os.path.join(chunk_target_dir, f'lookup-{chunk_idx+1}')
         Path(chunk_target_dir).mkdir(parents=True, exist_ok=True)
 
-        chunk_target_dir = os.path.join(chunk_target_dir, f'lookup-{chunk_idx+1}')
-        Path(chunk_target_dir).mkdir(parents=True, exist_ok=True)
-
         _, lookup = OasisLookupFactory.create(
             lookup_config_fp=params['lookup_config_json'],
             model_keys_data_path=params['lookup_data_dir'],
@@ -662,7 +659,6 @@ def prepare_keys_file_chunk(
         )
 
         # Store chunks
-        storage_subdir = f'{run_data_uuid}/oasis-files'
         params['chunk_keys'] = filestore.put(
             chunk_target_dir,
             filename=f'lookup-{chunk_idx+1}.tar.gz',
@@ -689,7 +685,7 @@ def collect_keys(
     storage_subdir = chunk_params['storage_subdir']
     del chunk_params['chunk_keys']
 
-    def merge_dataframes(paths, output_file, file_type, unique=True):
+    def merge_dataframes(paths, output_file, file_type):
         pd_read_func = getattr(pd, f"read_{file_type}")
         if not paths:
             logging.warning("merge_dataframes was called with an empty path list.")
@@ -708,10 +704,12 @@ def collect_keys(
         # add opt for Select merge strat
         df = pd.concat(df_chunks)
 
-        if unique:
+        # CSV files will have a default index which must not be used to filter duplicates.
+        if file_type == 'parquet':
             df = df[~df.index.duplicated(keep='first')]
         pd_write_func = getattr(df, f"to_{file_type}")
-        pd_write_func(output_file, index=True)
+        # Only write index for parquet files to avoid useless extra column for csv files.
+        pd_write_func(output_file, index=file_type=='parquet')
 
     def take_first(paths, output_file):
         first_path = paths[0]
