@@ -516,8 +516,11 @@ def keys_generation_task(fn):
             params['oed_scope_csv'] = os.path.join(params['root_run_dir'], f'reinsscope{scope_extention}')
             maybe_fetch_file(scope_file, params['oed_scope_csv'], scope_subdir)
 
+        # Complex model lookup files
         if settings_file:
             maybe_fetch_file(settings_file, params['lookup_complex_config_json'])
+        else:
+            params['lookup_complex_config_json'] = None
         if complex_data_files:
             maybe_prepare_complex_data_files(complex_data_files, params['user_data_dir'])
         else:
@@ -1073,20 +1076,18 @@ def prepare_complex_model_file_inputs(complex_model_files, run_directory):
         stored_fn = cmf[STORED_FILENAME]
         orig_fn = cmf[ORIGINAL_FILENAME]
 
-        if filestore._is_valid_url(stored_fn):
-            # If reference is a URL, then download the file & rename to 'original_filename'
-            fpath = filestore.get(stored_fn, run_directory)
-            shutil.move(fpath, os.path.join(run_directory, orig_fn))
-        elif filestore._is_locally_stored(stored_fn):
+        if filestore._is_locally_stored(stored_fn):
             # If refrence is local filepath check that it exisits and copy/symlink
-            from_path = filestore.get(stored_fn)
+            from_path = filestore.filepath(stored_fn)
             to_path = os.path.join(run_directory, orig_fn)
             if os.name == 'nt':
                 shutil.copy(from_path, to_path)
             else:
                 os.symlink(from_path, to_path)
         else:
-            os.symlink(from_path, to_path)
+            # If reference is a remote, then download the file & rename to 'original_filename'
+            fpath = filestore.get(stored_fn, run_directory)
+            shutil.move(fpath, os.path.join(run_directory, orig_fn))
 
 
 @task_failure.connect

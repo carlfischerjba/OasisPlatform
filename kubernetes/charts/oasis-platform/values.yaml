@@ -9,29 +9,29 @@ images:
       imagePullPolicy: Never
     ui:
       image: coreoasis/oasisui_app
-      version: 1.11.4
+      version: 1.11.6
     worker_controller:
       image: coreoasis/worker_controller
       version: dev
       imagePullPolicy: Never
   postgres:
     image: postgres
-    version: 12.8-alpine3.14
+    version: 15.2-alpine
   mysql:
     image: mysql
-    version: 8.0.26
+    version: 8.0.32
   keycloak:
     image: quay.io/keycloak/keycloak
-    version: 20.0.3
+    version: 21.0.1
   init:
     image: busybox
     version: 1.28
   redis:
     image: redis
-    version: 5.0.7
+    version: 7.0.9-alpine3.17
   rabbitmq:
     image: rabbitmq
-    version: 3.8-management-alpine
+    version: 3.11-management-alpine
 
 
 # Chart default values. Override by passing --set or -f to helm.
